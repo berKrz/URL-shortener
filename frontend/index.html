@@ -1,10 +1,29 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+
+    <!-- Anti-flash script -->
+    <script>
+      (function () {
+        var dark =
+          localStorage.getItem('vueuse-color-scheme') === 'dark' ||
+          (!localStorage.getItem('vueuse-color-scheme') &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+        document.documentElement.setAttribute(
+          'data-theme',
+          dark ? 'dark' : 'light'
+        );
+
+        // Match exactly your CSS --crt-bg-deep values
+        document.documentElement.style.background = dark ? '#08111f' : '#2d5570';
+        document.body.style.background = dark ? '#08111f' : '#2d5570';
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
