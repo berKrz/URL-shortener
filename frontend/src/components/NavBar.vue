@@ -20,7 +20,7 @@
       <button
         class="theme-toggle"
         :aria-label="`Switch to ${isDark ? 'light' : 'dark'} theme`"
-        @click="handleThemeSwitch"
+        @click="toggleDark()"
       >
         <span class="toggle-track" :class="{ 'toggle-track--dark': isDark }">
           <span class="toggle-thumb" :class="{ 'toggle-thumb--dark': isDark }">
@@ -59,27 +59,6 @@ const isDark = useDark({
   valueLight: 'light',
 })
 const toggleDark = useToggle(isDark)
-
-function handleThemeSwitch() {
-  const shell = document.querySelector('.crt-shell') as HTMLElement | null
-  if (!shell) {
-    toggleDark()
-    return
-  }
-
-  // 1. Trigger the collapse animation
-  shell.classList.add('crt-switching')
-
-  // 2. Swap the theme at the midpoint (when screen is thinnest)
-  setTimeout(() => {
-    toggleDark()
-  }, 220)
-
-  // 3. Remove the class after full animation completes so it can retrigger
-  setTimeout(() => {
-    shell.classList.remove('crt-switching')
-  }, 500)
-}
 </script>
 
 <style scoped>
@@ -105,7 +84,7 @@ function handleThemeSwitch() {
 }
 
 .navbar-label {
-  color: var(--crt-label);
+  color: var(--crt-highlight);
   font-size: 1.15rem;
   letter-spacing: 0.12em;
   white-space: nowrap;
@@ -132,38 +111,56 @@ function handleThemeSwitch() {
   gap: 0.1em;
   color: var(--crt-text);
   text-decoration: none;
-  padding: 0.05em 0.35em;
-  transition: color 0.12s, text-shadow 0.12s;
+  padding: 0.05em 0.5em;
+  transition: color 0.12s, text-shadow 0.12s, background 0.12s;
+  /* focus style */
+  outline: none;
+}
+
+/* Keyboard focus — terminal-style block cursor ring */
+.nav-link:focus-visible {
+  outline: 1px solid var(--crt-border-bright);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--crt-glow);
 }
 
 .nav-bracket {
-  color: var(--crt-label);
+  color: var(--crt-highlight);
   transition: color 0.12s;
 }
 
-.nav-text { letter-spacing: 0.18em; }
+.nav-text {
+  letter-spacing: 0.18em;
+}
 
-.nav-link:hover .nav-bracket,
-.nav-link--active .nav-bracket { color: var(--crt-highlight); }
-
-.nav-link:hover,
+/* Active: MC-style filled block highlight */
 .nav-link--active {
+  background: var(--crt-highlight);
+  color: var(--crt-header-bg);
+  text-shadow: none;
+}
+
+.nav-link--active .nav-bracket {
+  color: var(--crt-header-bg);
+  opacity: 0.6;
+}
+
+.nav-link:hover:not(.nav-link--active) .nav-bracket {
+  color: var(--crt-highlight);
+}
+
+.nav-link:hover:not(.nav-link--active) {
   color: var(--crt-highlight);
   text-shadow: 0 0 6px var(--crt-glow), 0 0 18px var(--crt-glow-wide);
 }
 
-.nav-link--active .nav-text {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.nav-link:hover .nav-text::after {
+.nav-link:hover:not(.nav-link--active) .nav-text::after {
   content: '▮';
   margin-left: 3px;
   animation: blink 0.85s step-end infinite;
 }
 
-/* ─── Theme Toggle ─────────────────────────────────── */
+/* ─── Theme Toggle ───────────────────────────────── */
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -174,13 +171,22 @@ function handleThemeSwitch() {
   font-family: 'VT323', monospace;
   font-size: 1.05rem;
   letter-spacing: 0.12em;
-  color: var(--crt-label);
+  color: var(--crt-highlight);
   padding: 0;
   animation: fadeInRight 0.5s ease both;
   transition: color 0.15s;
+  outline: none;
 }
 
-.theme-toggle:hover { color: var(--crt-highlight); }
+.theme-toggle:focus-visible {
+  outline: 1px solid var(--crt-border-bright);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 2px var(--crt-glow);
+}
+
+.theme-toggle:hover {
+  color: var(--crt-highlight);
+}
 
 .toggle-track {
   display: flex;
@@ -189,7 +195,7 @@ function handleThemeSwitch() {
   height: 1.4em;
   border-radius: 0;
   border: 1px solid var(--crt-border-bright);
-  background: var(--crt-bg-deep, #2d5570);
+  background: var(--crt-bg-deep);
   padding: 0.1em;
   position: relative;
   transition: background 0.25s, border-color 0.25s;
@@ -198,7 +204,7 @@ function handleThemeSwitch() {
 
 .toggle-track--dark {
   background: var(--crt-header-bg);
-  border-color: var(--crt-label);
+  border-color: var(--crt-highlight);
 }
 
 .toggle-thumb {
@@ -226,9 +232,14 @@ function handleThemeSwitch() {
   height: 0.75em;
 }
 
-.toggle-label { min-width: 2.8em; text-align: left; }
+.toggle-label {
+  min-width: 2.8em;
+  text-align: left;
+}
 
-/* ─── Scanline ─────────────────────────────────────── */
+/* ─── Scanline ───────────────────────────────────── */
+/* Raised above content but pointer-events none,
+   lower opacity so it doesn't clip text rendering */
 .navbar-scanline {
   pointer-events: none;
   position: absolute;
@@ -237,46 +248,29 @@ function handleThemeSwitch() {
     to bottom,
     transparent 0px,
     transparent 3px,
-    rgba(0, 0, 0, 0.08) 3px,
-    rgba(0, 0, 0, 0.08) 4px
+    rgba(0, 0, 0, 0.05) 3px,
+    rgba(0, 0, 0, 0.05) 4px
   );
-  z-index: 10;
+  z-index: 1;
 }
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
+
 @keyframes fadeInDown {
   from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes fadeInLeft {
   from { opacity: 0; transform: translateX(-10px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
 @keyframes fadeInRight {
   from { opacity: 0; transform: translateX(10px); }
   to   { opacity: 1; transform: translateX(0); }
-}
-
-/* ─── CRT theme-switch animation ─────────────────────────────
-   Collapses the screen to a line, then re-expands.
-   The JS swaps data-theme at the 220ms midpoint (thinnest point).
-─────────────────────────────────────────────────────────────── */
-.crt-switching {
-  animation: crtSwitch 0.5s ease forwards !important;
-}
-
-@keyframes crtSwitch {
-  /* collapse to line */
-  0%   { clip-path: inset(0% 0 0% 0); }
-  40%  { clip-path: inset(48% 0 48% 0); }
-  /* thinnest — theme swap happens here at 220ms */
-  44%  { clip-path: inset(49.8% 0 49.8% 0); }
-  /* re-expand with new theme */
-  55%  { clip-path: inset(49.8% 0 49.8% 0); }
-  80%  { clip-path: inset(5% 0 5% 0); }
-  100% { clip-path: inset(0% 0 0% 0); }
 }
 </style>

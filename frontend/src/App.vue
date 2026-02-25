@@ -2,7 +2,6 @@
   <div class="crt-shell">
     <div class="crt-vignette" aria-hidden="true"></div>
     <div class="crt-scanlines" aria-hidden="true"></div>
-    <!-- This overlay plays the switch animation -->
     <div class="crt-switch" :class="{ 'crt-switch--active': isSwitching }" aria-hidden="true"></div>
 
     <header class="app-header">
@@ -10,8 +9,16 @@
     </header>
 
     <main class="app-main">
-      <RouterView />
+      <RouterView v-slot="{ Component }">
+        <Transition name="page" mode="out-in">
+          <component :is="Component" />
+        </Transition>
+      </RouterView>
     </main>
+
+    <footer class="app-footer">
+      <span class="footer-text">made by <span class="footer-author">berKrz</span></span>
+    </footer>
   </div>
 </template>
 
@@ -28,10 +35,8 @@ const isDark = useDark({
 })
 
 const isSwitching = ref(false)
-
 watch(isDark, () => {
   isSwitching.value = true
-  // Duration must match animation length in CSS
   setTimeout(() => (isSwitching.value = false), 500)
 })
 </script>
@@ -49,7 +54,6 @@ watch(isDark, () => {
   --crt-header-bg:     #1a3a52;
   --crt-text:          #c8eaff;
   --crt-highlight:     #ffffff;
-  --crt-label:         #7ab8d8;
   --crt-border-bright: #5ba3c9;
   --crt-border-dim:    #28607f;
   --crt-glow:          rgba(200, 234, 255, 0.5);
@@ -65,7 +69,6 @@ watch(isDark, () => {
   --crt-header-bg:     #0a1628;
   --crt-text:          #4ab3e8;
   --crt-highlight:     #7dd4f8;
-  --crt-label:         #2a6ea6;
   --crt-border-bright: #1e5080;
   --crt-border-dim:    #143350;
   --crt-glow:          rgba(74, 179, 232, 0.55);
@@ -79,29 +82,27 @@ watch(isDark, () => {
   padding: 0;
 }
 
-html {
-  width: 100%;
-  min-height: 100%;
-  background-color: var(--crt-bg-deep);
-}
-
+/* Lock the viewport — no scrolling at the html/body level */
+html,
 body {
   width: 100%;
-  min-height: 100%;
-  background-color: var(--crt-bg-deep);
+  height: 100%;
   overflow: hidden !important;
+  background-color: var(--crt-bg-deep);
 }
 
 #app {
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
 }
 
-/* ─── Shell ───────────────────────────────────────── */
+/* ─── Shell: fills viewport exactly, children stack via flex ── */
 .crt-shell {
   font-family: 'VT323', monospace;
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   position: relative;
   color: var(--crt-text);
   background: radial-gradient(
@@ -110,20 +111,72 @@ body {
     var(--crt-bg) 45%,
     var(--crt-bg-deep) 100%
   );
-  /* theme color crossfade underneath the switch animation */
   transition: background 0.4s ease, color 0.4s ease;
   animation: bootUp 0.7s ease both;
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
-/* ─── CRT theme-switch overlay ────────────────────── */
+/* ─── Header: fixed height, never shrinks ─────────── */
+.app-header {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+/* ─── Main: takes all remaining space, scrolls internally ── */
+.app-main {
+  flex: 1;
+  overflow: hidden !important;
+  padding: 1.5rem;
+  /* thin themed scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--crt-border-bright) var(--crt-bg-deep);
+}
+
+.app-main::-webkit-scrollbar {
+  width: 6px;
+}
+
+.app-main::-webkit-scrollbar-track {
+  background: var(--crt-bg-deep);
+}
+
+.app-main::-webkit-scrollbar-thumb {
+  background: var(--crt-border-bright);
+}
+
+/* ─── Footer: fixed height, never shrinks ─────────── */
+.app-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3em 1.5rem;
+  background: var(--crt-header-bg);
+  border-top: 1px solid var(--crt-border-dim);
+  font-family: 'VT323', monospace;
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+}
+
+.footer-text {
+  color: var(--crt-highlight);
+}
+
+.footer-author {
+  color: var(--crt-text);
+  text-shadow: 0 0 6px var(--crt-glow);
+  letter-spacing: 0.18em;
+}
+
+/* ─── Overlays ────────────────────────────────────── */
 .crt-switch {
   pointer-events: none;
   position: fixed;
   inset: 0;
   background: var(--crt-bg-deep);
   z-index: 300;
-  /* idle: fully collapsed to nothing, invisible */
   clip-path: inset(50% 0 50% 0);
   opacity: 0;
 }
@@ -158,17 +211,23 @@ body {
   z-index: 199;
 }
 
-.app-header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
+/* ─── Page transition ─────────────────────────────── */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-.app-main {
-  padding: 1.5rem;
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
-/* Boot: thin line expands to full screen */
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+/* ─── Animations ──────────────────────────────────── */
 @keyframes bootUp {
   0%   { clip-path: inset(49.8% 0 49.8% 0); }
   35%  { clip-path: inset(18% 0 18% 0); }
@@ -176,12 +235,10 @@ body {
   100% { clip-path: inset(0% 0 0% 0); }
 }
 
-/* Switch: full screen → collapses to line → gone
-   Theme colors update while it's collapsed at 50%  */
 @keyframes crtSwitch {
-  0%   { clip-path: inset(0% 0 0% 0);    opacity: 1; }
+  0%   { clip-path: inset(0% 0 0% 0);       opacity: 1; }
   40%  { clip-path: inset(49.8% 0 49.8% 0); opacity: 1; }
   60%  { clip-path: inset(49.8% 0 49.8% 0); opacity: 1; }
-  100% { clip-path: inset(0% 0 0% 0);    opacity: 0; }
+  100% { clip-path: inset(0% 0 0% 0);       opacity: 0; }
 }
 </style>
