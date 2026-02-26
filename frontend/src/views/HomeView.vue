@@ -87,7 +87,7 @@
       <div v-if="result" class="panel panel--result">
         <div class="panel-header">
           <span class="panel-label">SHORTENED URL</span>
-          <span class="result-status">✓ READY</span>
+          <span class="result-status">ready</span>
         </div>
         <div class="result-row">
           <span class="result-url">{{ result }}</span>

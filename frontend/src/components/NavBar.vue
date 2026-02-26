@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar">
     <div class="navbar-chrome">
-      <span class="navbar-label">[ SHORTURL ]</span>
+      <span class="navbar-label">[ shorturl ]</span>
 
       <div class="navbar-links">
         <RouterLink to="/" class="nav-link" active-class="nav-link--active">
@@ -28,7 +28,7 @@
             <Moon v-else         class="toggle-icon" :size="12" :stroke-width="2" />
           </span>
         </span>
-        <span class="toggle-label">{{ isDark ? 'DARK' : 'LITE' }}</span>
+        <span class="toggle-label">{{ isDark ? 'DARK' : 'LIGHT' }}</span>
       </button>
     </div>
 
