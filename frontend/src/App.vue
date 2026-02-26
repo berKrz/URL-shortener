@@ -23,22 +23,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { useDark } from '@vueuse/core'
-import NavBar from './components/NavBar.vue'
+  import { ref, watch } from 'vue'
+  import { useDark } from '@vueuse/core'
+  import NavBar from './components/NavBar.vue'
 
-const isDark = useDark({
-  selector: 'html',
-  attribute: 'data-theme',
-  valueDark: 'dark',
-  valueLight: 'light',
-})
+  const isDark = useDark({
+    selector: 'html',
+    attribute: 'data-theme',
+    valueDark: 'dark',
+    valueLight: 'light',
+  })
 
-const isSwitching = ref(false)
-watch(isDark, () => {
-  isSwitching.value = true
-  setTimeout(() => (isSwitching.value = false), 500)
-})
+  const isSwitching = ref(false)
+  watch(isDark, () => {
+    isSwitching.value = true
+    setTimeout(() => (isSwitching.value = false), 500)
+  })
 </script>
 
 <style>
@@ -58,6 +58,8 @@ watch(isDark, () => {
   --crt-border-dim:    #28607f;
   --crt-glow:          rgba(200, 234, 255, 0.5);
   --crt-glow-wide:     rgba(200, 234, 255, 0.18);
+  --crt-error:         #ff6b6b;
+  --crt-error-glow:    rgba(255, 107, 107, 0.4);
 }
 
 /* ════════════════════════════════════════════════════
@@ -73,6 +75,8 @@ watch(isDark, () => {
   --crt-border-dim:    #143350;
   --crt-glow:          rgba(74, 179, 232, 0.55);
   --crt-glow-wide:     rgba(74, 179, 232, 0.2);
+  --crt-error:         #ff4444;
+  --crt-error-glow:    rgba(255, 68, 68, 0.35);
 }
 
 /* ─── Reset ───────────────────────────────────────── */
@@ -129,9 +133,6 @@ body {
   flex: 1;
   overflow: hidden !important;
   padding: 1.5rem;
-  /* thin themed scrollbar */
-  scrollbar-width: thin;
-  scrollbar-color: var(--crt-border-bright) var(--crt-bg-deep);
 }
 
 .app-main::-webkit-scrollbar {
