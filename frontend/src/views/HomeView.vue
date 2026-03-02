@@ -4,7 +4,7 @@
     <div class="home-title">
       <span class="title-bracket">┌─[</span>
       <span class="title-text">SHORTURL</span>
-      <span class="title-bracket">]────────────────────────────────────────────</span>
+      <span class="title-bracket">]─────────────────────────────────────────┐</span>
     </div>
 
     <div class="panel" :class="{ 'panel--error': errors.longUrl }">
@@ -107,7 +107,7 @@
     </Transition>
 
     <div class="home-footer-rule">
-      <span>└───────────────────────────────────────────────────</span>
+      <span>└──────────────────────────────────────────────────┘</span>
     </div>
 
   </div>
