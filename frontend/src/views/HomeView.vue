@@ -75,20 +75,17 @@
         </div>
       </Transition>
 
-    <div class="submit-row">
-      <button class="submit-btn" @click="shorten">
-        <span class="submit-bracket">[</span>
-        <span class="submit-text">SHORTEN</span>
-        <span class="submit-bracket">]</span>
-        <span class="submit-cursor">▮</span>
-      </button>
-    </div>
-
       <Transition name="panel-slide">
-        <div v-if="result" class="panel panel--result">
+        <div v-if="result" class="panel panel--result" aria-live="polite">
           <div class="panel-header">
             <span class="panel-label">SHORTENED URL</span>
-            <span class="result-status">ready</span>
+            <div class="result-header-actions">
+              <span class="result-status">ready</span>
+              <button class="reset-btn" @click="reset" title="Clear and start over">
+                <RotateCcw :size="11" :stroke-width="2.5" />
+                RESET
+              </button>
+            </div>
           </div>
           <div class="result-row">
             <span class="result-url">{{ result }}</span>
@@ -97,13 +94,22 @@
               <Copy  v-else        :size="14" :stroke-width="2" />
               {{ copied ? 'COPIED' : 'COPY' }}
             </button>
-            <a class="result-action" :href="result" target="_blank" rel="noopener">
+            <a class="result-action" :href="result" target="_blank" rel="noopener" title="Opens in a new tab">
               <ExternalLink :size="14" :stroke-width="2" />
               OPEN
             </a>
           </div>
         </div>
       </Transition>
+
+      <div class="submit-row">
+        <button class="submit-btn" @click="shorten">
+          <span class="submit-bracket">[</span>
+          <span class="submit-text">SHORTEN</span>
+          <span class="submit-bracket">]</span>
+          <span class="submit-cursor">▮</span>
+        </button>
+      </div>
     </fieldset>
   </div>
 </template>
@@ -112,7 +118,7 @@
   import { ref, reactive, watch, onMounted, useTemplateRef } from 'vue'
   import { validate, hasErrors }  from '@/lib/validation'
   import type { ValidationErrors } from '@/lib/validation'
-  import { Copy, ExternalLink, Check } from 'lucide-vue-next'
+  import { Copy, ExternalLink, Check, RotateCcw } from 'lucide-vue-next'
 
   type Mode = 'auto' | 'custom'
 
@@ -156,6 +162,17 @@
     if (!result.value) return
     await navigator.clipboard.writeText(result.value)
     copied.value = true
+  }
+
+  function reset() {
+    longUrl.value     = ''
+    customSlug.value  = ''
+    result.value      = ''
+    copied.value      = false
+    mode.value        = 'auto'
+    errors.longUrl    = null
+    errors.customSlug = null
+    inputLongURL.value?.focus()
   }
 </script>
 
@@ -416,6 +433,12 @@
     word-break: break-all;
   }
 
+  .result-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75em;
+  }
+
   .result-action {
     background: none;
     border: 1px solid var(--crt-text);
@@ -434,6 +457,34 @@
 
   .result-action:hover { color: var(--crt-header-bg); background: var(--crt-text); border-color: var(--crt-text); }
   .result-action:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 2px; }
+
+  .reset-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    background: none;
+    border: 1px solid var(--crt-border-bright);
+    font-family: 'VT323', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--crt-border-bright);
+    cursor: pointer;
+    padding: 0.05em 0.4em;
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+    outline: none;
+    line-height: 1;
+  }
+
+  .reset-btn:hover {
+    color: var(--crt-error);
+    border-color: var(--crt-error);
+    box-shadow: 0 0 6px var(--crt-error-glow);
+  }
+
+  .reset-btn:focus-visible {
+    outline: 1px solid var(--crt-error);
+    outline-offset: 2px;
+  }
 
   /* ─── Transitions ─────────────────────────────────── */
   .panel-slide-enter-active,
