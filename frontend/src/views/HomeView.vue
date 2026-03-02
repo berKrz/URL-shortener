@@ -1,79 +1,77 @@
 <template>
   <div class="home">
+    <fieldset class="home-fieldset">
+      <legend class="home-legend">
+        <span class="legend-text">[ SHORTURL ]</span>
+      </legend>
 
-    <div class="home-title">
-      <span class="title-bracket">┌─[</span>
-      <span class="title-text">SHORTURL</span>
-      <span class="title-bracket">]─────────────────────────────────────────┐</span>
-    </div>
-
-    <div class="panel" :class="{ 'panel--error': errors.longUrl }">
-      <div class="panel-header">
-        <span class="panel-label">ENTER LONG URL</span>
-        <Transition name="err">
-          <span v-if="errors.longUrl" class="panel-error">⚠ {{ errors.longUrl }}</span>
-          <span v-else class="panel-hint">paste or type below</span>
-        </Transition>
-      </div>
-      <div class="input-row">
-        <span class="input-prompt">$&gt;</span>
-        <input
-          v-model="longUrl"
-          class="url-input"
-          type="url"
-          placeholder="https://example.com/very/long/url/that/needs/shortening"
-          @input="errors.longUrl = null"
-          ref="inputLongURl"
-        />
-      </div>
-    </div>
-
-    <div class="mode-row">
-      <button
-        class="mode-btn"
-        :class="{ 'mode-btn--active': mode === 'auto' }"
-        @click="mode = 'auto'"
-      >
-        <span class="mode-key">[1]</span>
-        <span class="mode-label">AUTO</span>
-        <span class="mode-desc">6-char generated</span>
-      </button>
-      <span class="mode-sep">│</span>
-      <button
-        class="mode-btn"
-        :class="{ 'mode-btn--active': mode === 'custom' }"
-        @click="mode = 'custom'"
-      >
-        <span class="mode-key">[2]</span>
-        <span class="mode-label">CUSTOM</span>
-        <span class="mode-desc">7-char chosen</span>
-      </button>
-    </div>
-
-    <Transition name="panel-slide">
-      <div v-if="mode === 'custom'" class="panel" :class="{ 'panel--error': errors.customSlug }">
+      <div class="panel" :class="{ 'panel--error': errors.longUrl }">
         <div class="panel-header">
-          <span class="panel-label">CUSTOM SLUG</span>
+          <span class="panel-label">ENTER LONG URL</span>
           <Transition name="err">
-            <span v-if="errors.customSlug" class="panel-error">⚠ {{ errors.customSlug }}</span>
-            <span v-else class="panel-hint">exactly 7 characters</span>
+            <span v-if="errors.longUrl" class="panel-error">⚠ {{ errors.longUrl }}</span>
+            <span v-else class="panel-hint">paste or type below</span>
           </Transition>
         </div>
         <div class="input-row">
           <span class="input-prompt">$&gt;</span>
-          <span class="input-base">url-shortener.com/</span>
           <input
-            v-model="customSlug"
+            v-model="longUrl"
             class="url-input"
-            type="text"
-            placeholder="mySlug7"
-            maxlength="7"
-            @input="errors.customSlug = null"
+            type="url"
+            placeholder="https://example.com/very/long/url/that/needs/shortening"
+            @input="errors.longUrl = null"
+            ref="inputLongURl"
           />
-          <span class="char-counter">{{ customSlug.length }}/7</span>
         </div>
       </div>
-    </Transition>
+
+      <div class="mode-row">
+        <button
+          class="mode-btn"
+          :class="{ 'mode-btn--active': mode === 'auto' }"
+          @click="mode = 'auto'"
+        >
+          <span class="mode-key">[1]</span>
+          <span class="mode-label">AUTO</span>
+          <span class="mode-desc">6-char generated</span>
+        </button>
+        <span class="mode-sep">│</span>
+        <button
+          class="mode-btn"
+          :class="{ 'mode-btn--active': mode === 'custom' }"
+          @click="mode = 'custom'"
+        >
+          <span class="mode-key">[2]</span>
+          <span class="mode-label">CUSTOM</span>
+          <span class="mode-desc">7-char chosen</span>
+        </button>
+      </div>
+
+      <Transition name="panel-slide">
+        <div v-if="mode === 'custom'" class="panel" :class="{ 'panel--error': errors.customSlug }">
+          <div class="panel-header">
+            <span class="panel-label">CUSTOM SLUG</span>
+            <Transition name="err">
+              <span v-if="errors.customSlug" class="panel-error">⚠ {{ errors.customSlug }}</span>
+              <span v-else class="panel-hint">exactly 7 characters</span>
+            </Transition>
+          </div>
+          <div class="input-row">
+            <span class="input-prompt">$&gt;</span>
+            <span class="input-base">url-shortener.com/</span>
+            <input
+              v-model="customSlug"
+              class="url-input"
+              type="text"
+              placeholder="mySlug7"
+              maxlength="7"
+              @input="errors.customSlug = null"
+            />
+            <span class="char-counter">{{ customSlug.length }}/7</span>
+          </div>
+        </div>
+      </Transition>
 
     <div class="submit-row">
       <button class="submit-btn" @click="shorten">
@@ -84,32 +82,27 @@
       </button>
     </div>
 
-    <Transition name="panel-slide">
-      <div v-if="result" class="panel panel--result">
-        <div class="panel-header">
-          <span class="panel-label">SHORTENED URL</span>
-          <span class="result-status">ready</span>
+      <Transition name="panel-slide">
+        <div v-if="result" class="panel panel--result">
+          <div class="panel-header">
+            <span class="panel-label">SHORTENED URL</span>
+            <span class="result-status">ready</span>
+          </div>
+          <div class="result-row">
+            <span class="result-url">{{ result }}</span>
+            <button class="result-action" @click="copy">
+              <Check v-if="copied" :size="14" :stroke-width="2" />
+              <Copy  v-else        :size="14" :stroke-width="2" />
+              {{ copied ? 'COPIED' : 'COPY' }}
+            </button>
+            <a class="result-action" :href="result" target="_blank" rel="noopener">
+              <ExternalLink :size="14" :stroke-width="2" />
+              OPEN
+            </a>
+          </div>
         </div>
-        <div class="result-row">
-          <span class="result-url">{{ result }}</span>
-          <button class="result-action" @click="copy">
-            <Check v-if="copied" :size="14" :stroke-width="2" />
-            <Copy  v-else        :size="14" :stroke-width="2" />
-            {{ copied ? 'COPIED' : 'COPY' }}
-          </button>
-          
-          <a class="result-action" :href="result" target="_blank" rel="noopener">
-            <ExternalLink :size="14" :stroke-width="2" />
-            OPEN
-          </a>
-        </div>
-      </div>
-    </Transition>
-
-    <div class="home-footer-rule">
-      <span>└──────────────────────────────────────────────────┘</span>
-    </div>
-
+      </Transition>
+    </fieldset>
   </div>
 </template>
 
@@ -171,25 +164,46 @@
     font-family: 'VT323', monospace;
     display: flex;
     flex-direction: column;
-    gap: 1.1rem;
     max-width: 720px;
-    margin: 0 auto;
-    padding-top: 0.5rem;
+    margin: 2rem auto 0;
+    padding: 0 1rem;
   }
 
-  /* ─── Title ───────────────────────────────────────── */
-  .home-title {
-    font-size: 1.3rem;
-    letter-spacing: 0.06em;
-    color: var(--crt-text);
-    white-space: nowrap;
-    overflow: hidden;
+  /* ─── Fieldset ────────────────────────────────────── */
+  .home-fieldset {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+    border: 1px solid var(--crt-border-bright);
+    border-top: 2px solid var(--crt-text);
+    border-left: 2px solid var(--crt-text);
+    padding: 1.2rem 1.2rem 1.4rem;
+    border-radius: 0;
     animation: fadeIn 0.4s ease both;
+    position: relative;
+    background: rgba(0, 0, 0, 0.12);
+    box-shadow:
+      inset 0 0 24px rgba(0, 0, 0, 0.3),
+      0 0 0 1px var(--crt-border-dim),
+      0 4px 32px rgba(0, 0, 0, 0.35);
   }
 
-  .title-text {
+  /* ─── Legend ──────────────────────────────────────── */
+  .home-legend {
+    font-family: 'VT323', monospace;
+    font-size: 1.4rem;
+    letter-spacing: 0.12em;
+    padding: 0 0.6em;
+    margin-left: 0.5em;
+    color: var(--crt-text);
+    background: var(--crt-header-bg);
+    border: 1px solid var(--crt-border-bright);
+    box-shadow: 0 0 10px var(--crt-glow-wide);
+  }
+
+  .legend-text {
     color: var(--crt-highlight);
-    text-shadow: 0 0 8px var(--crt-glow);
+    text-shadow: 0 0 10px var(--crt-glow), 0 0 24px var(--crt-glow-wide);
     letter-spacing: 0.2em;
   }
 
@@ -214,12 +228,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.2em 0.75em;
+    padding: 0.35em 0.9em;
     background: var(--crt-header-bg);
-    border-bottom: 1px solid var(--crt-border-dim);
     font-size: 1rem;
     letter-spacing: 0.12em;
-    /* reserve height so hint/error swap doesn't shift layout */
     min-height: 2em;
   }
 
@@ -239,12 +251,12 @@
     animation: errShake 0.3s ease both;
   }
 
-  /* ─── Inputs ────────────────────────────���─────────── */
+  /* ─── Inputs ─────────────────────────────────────── */
   .input-row {
     display: flex;
     align-items: center;
     gap: 0.5em;
-    padding: 0.4em 0.75em;
+    padding: 0.6em 0.9em;
   }
 
   .input-prompt {
@@ -304,6 +316,7 @@
     font-size: 1.1rem;
     letter-spacing: 0.1em;
     animation: fadeIn 0.4s ease 0.15s both;
+    padding-top: 0.2rem;
   }
 
   .mode-sep { color: var(--crt-text); opacity: 0.6; }
@@ -346,6 +359,7 @@
   .submit-row {
     display: flex;
     animation: fadeIn 0.4s ease 0.2s both;
+    padding-top: 0.2rem;
   }
 
   .submit-btn {
@@ -418,17 +432,6 @@
 
   .result-action:hover { color: var(--crt-header-bg); background: var(--crt-text); border-color: var(--crt-text); }
   .result-action:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 2px; }
-
-  /* ─── Bottom rule ─────────────────────────────────── */
-  .home-footer-rule {
-    color: var(--crt-text);
-    font-size: 1.3rem;
-    letter-spacing: 0.06em;
-    overflow: hidden;
-    opacity: 0.4;
-    animation: fadeIn 0.4s ease both;
-    white-space: nowrap;
-  }
 
   /* ─── Transitions ─────────────────────────────────── */
   .panel-slide-enter-active,
