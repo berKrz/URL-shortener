@@ -21,7 +21,8 @@
             type="url"
             placeholder="https://example.com/very/long/url/that/needs/shortening"
             @input="errors.longUrl = null"
-            ref="inputLongURl"
+            ref="inputLongURL"
+            @keydown.enter="shorten"
           />
         </div>
       </div>
@@ -67,6 +68,7 @@
               placeholder="mySlug7"
               maxlength="7"
               @input="errors.customSlug = null"
+              @keydown.enter="shorten"
             />
             <span class="char-counter">{{ customSlug.length }}/7</span>
           </div>
@@ -120,12 +122,12 @@
   const result       = ref('')
   const copied       = ref(false)
   const loading      = ref(false)
-  const inputLongURl = useTemplateRef<HTMLInputElement>('inputLongURl')
+  const inputLongURL = useTemplateRef<HTMLInputElement>('inputLongURL')
 
-  const errors = reactive<ValidationErrors>({ longUrl: '', customSlug: '' })
+  const errors = reactive<ValidationErrors>({ longUrl: null, customSlug: null })
 
   onMounted(() => {
-    inputLongURl.value?.focus()
+    inputLongURL.value?.focus()
   })
 
   watch(mode, (newMode) => {
