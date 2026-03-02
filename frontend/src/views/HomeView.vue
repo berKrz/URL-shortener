@@ -23,6 +23,7 @@
           type="url"
           placeholder="https://example.com/very/long/url/that/needs/shortening"
           @input="errors.longUrl = null"
+          ref="inputLongURl"
         />
       </div>
     </div>
@@ -113,22 +114,26 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, watch } from 'vue'
+  import { ref, reactive, watch, onMounted, useTemplateRef } from 'vue'
   import { validate, hasErrors }  from '@/lib/validation'
   import type { ValidationErrors } from '@/lib/validation'
   import { Copy, ExternalLink, Check } from 'lucide-vue-next'
 
-
   type Mode = 'auto' | 'custom'
 
-  const mode       = ref<Mode>('auto')
-  const longUrl    = ref('')
-  const customSlug = ref('')
-  const result     = ref('')
-  const copied     = ref(false)
-  const loading    = ref(false)
+  const mode         = ref<Mode>('auto')
+  const longUrl      = ref('')
+  const customSlug   = ref('')
+  const result       = ref('')
+  const copied       = ref(false)
+  const loading      = ref(false)
+  const inputLongURl = useTemplateRef<HTMLInputElement>('inputLongURl')
 
   const errors = reactive<ValidationErrors>({ longUrl: '', customSlug: '' })
+
+  onMounted(() => {
+    inputLongURl.value?.focus()
+  })
 
   watch(mode, (newMode) => {
     if (newMode === 'auto') {
