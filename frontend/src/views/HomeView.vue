@@ -9,7 +9,10 @@
         <div class="panel-header">
           <span class="panel-label">ENTER LONG URL</span>
           <Transition name="err">
-            <span v-if="errors.longUrl" class="panel-error">⚠ {{ errors.longUrl }}</span>
+            <span v-if="errors.longUrl" class="panel-error">
+              <TriangleAlert :size="14" :stroke-width="2" class="mr-2"/>
+              {{ errors.longUrl }}
+            </span>
             <span v-else class="panel-hint">paste or type below</span>
           </Transition>
         </div>
@@ -54,8 +57,11 @@
           <div class="panel-header">
             <span class="panel-label">CUSTOM SLUG</span>
             <Transition name="err">
-              <span v-if="errors.customSlug" class="panel-error">⚠ {{ errors.customSlug }}</span>
-              <span v-else class="panel-hint">exactly 7 characters</span>
+              <span v-if="errors.customSlug" class="panel-error">
+                <TriangleAlert :size="14" :stroke-width="2" class="mr-2"/>
+                {{ errors.longUrl }}
+              </span>
+              <span v-else class="panel-hint">7–15 characters</span>
             </Transition>
           </div>
           <div class="input-row">
@@ -65,12 +71,12 @@
               v-model="customSlug"
               class="url-input"
               type="text"
-              placeholder="mySlug7"
-              maxlength="7"
+              placeholder="myCustomSlug"
+              maxlength="15"
               @input="errors.customSlug = null"
               @keydown.enter="shorten"
             />
-            <span class="char-counter">{{ customSlug.length }}/7</span>
+            <span class="char-counter">{{ customSlug.length }}/15</span>
           </div>
         </div>
       </Transition>
@@ -81,7 +87,7 @@
             <span class="panel-label">SHORTENED URL</span>
             <div class="result-header-actions">
               <span class="result-status">ready</span>
-              <button class="reset-btn" @click="reset" title="Clear and start over">
+              <button class="reset-btn" @click="reset">
                 <RotateCcw :size="11" :stroke-width="2.5" />
                 RESET
               </button>
@@ -94,7 +100,7 @@
               <Copy  v-else        :size="14" :stroke-width="2" />
               {{ copied ? 'COPIED' : 'COPY' }}
             </button>
-            <a class="result-action" :href="result" target="_blank" rel="noopener" title="Opens in a new tab">
+            <a class="result-action" :href="result" target="_blank" rel="noopener">
               <ExternalLink :size="14" :stroke-width="2" />
               OPEN
             </a>
@@ -118,7 +124,7 @@
   import { ref, reactive, watch, onMounted, useTemplateRef } from 'vue'
   import { validate, hasErrors }  from '@/lib/validation'
   import type { ValidationErrors } from '@/lib/validation'
-  import { Copy, ExternalLink, Check, RotateCcw } from 'lucide-vue-next'
+  import { Copy, ExternalLink, Check, RotateCcw, TriangleAlert } from 'lucide-vue-next'
 
   type Mode = 'auto' | 'custom'
 
@@ -263,6 +269,9 @@
   }
 
   .panel-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
     color: var(--crt-error);
     font-size: 0.9rem;
     letter-spacing: 0.08em;
