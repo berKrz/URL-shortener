@@ -122,9 +122,9 @@
       <div class="submit-row">
         <button class="submit-btn" @click="shorten" :disabled="loading">
           <span class="submit-bracket">[</span>
-          <span class="submit-text">SHORTEN</span>
+          <span class="submit-text">{{ loading ? 'WORKING' + dotsText : 'SHORTEN' }}</span>
           <span class="submit-bracket">]</span>
-          <span class="submit-cursor">▮</span>
+          <span v-if="!loading" class="submit-cursor">{{ '▮' }}</span>
         </button>
       </div>
     </fieldset>
@@ -132,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, watch, onMounted, useTemplateRef } from 'vue'
+  import { ref, reactive, watch, onMounted, useTemplateRef, computed, onUnmounted } from 'vue'
   import { validate, hasErrors }  from '@/lib/validation'
   import type { ValidationErrors } from '@/lib/validation'
   import { shortenUrl, ApiError } from '@/lib/api'
@@ -151,6 +151,31 @@
 
   const errors = reactive<ValidationErrors>({ longUrl: null, customSlug: null })
 
+  // loading animation
+  const loadingFrame = ref(0)
+  let loadingTimer: ReturnType<typeof setInterval> | null = null
+
+  const dotsText    = computed(() => ['', '.', '..', '...'][loadingFrame.value])
+
+  function startLoading() {
+    loadingFrame.value = 0
+    loadingTimer = setInterval(() => {
+      loadingFrame.value = (loadingFrame.value + 1) % 4
+    }, 180)
+    loading.value = true
+  }
+
+  function stopLoading() {
+    if (loadingTimer) clearInterval(loadingTimer)
+    loadingTimer = null
+    loading.value = false
+  }
+
+  // safety cleanup if component unmounts mid-request
+  onUnmounted(() => {
+    if (loadingTimer) clearInterval(loadingTimer)
+  })
+
   onMounted(() => {
     inputLongURL.value?.focus()
   })
@@ -168,7 +193,7 @@
     Object.assign(errors, validated)
     if (hasErrors(validated)) return
 
-    loading.value = true
+    startLoading()
     errorMessage.value = null
 
     try {
@@ -192,7 +217,7 @@
         }
       }
     } finally {
-      loading.value = false
+      stopLoading()
     }
   }
 
@@ -443,6 +468,22 @@
 
   .submit-btn:hover { background: var(--crt-text); color: var(--crt-header-bg); text-shadow: none; }
   .submit-btn:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 3px; }
+
+  .submit-btn:disabled .submit-cursor {
+    animation: none;
+  }
+
+  .submit-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .submit-btn:disabled:hover {
+    background: none;
+    color: var(--crt-text);
+    text-shadow: 0 0 6px var(--crt-glow);
+  }
+
   .submit-bracket { opacity: 0.7; }
 
   .submit-cursor {
