@@ -16,7 +16,7 @@ export function validateCustomSlug(slug: string): string | null {
   if (!slug.trim())
     return 'slug is required'
 
-  if (slug.trim().length <= 7)
+  if (slug.trim().length < 7)
     return 'slug length must be 7 minimum'
   
   if (slug.trim().length > 15)

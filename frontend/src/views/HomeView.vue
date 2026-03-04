@@ -59,7 +59,7 @@
             <Transition name="err">
               <span v-if="errors.customSlug" class="panel-error">
                 <TriangleAlert :size="14" :stroke-width="2" class="mr-2"/>
-                {{ errors.longUrl }}
+                {{ errors.customSlug }}
               </span>
               <span v-else class="panel-hint">7–15 characters</span>
             </Transition>
@@ -108,8 +108,19 @@
         </div>
       </Transition>
 
+      <Transition name="panel-slide">
+        <div v-if="errorMessage" class="panel panel--error">
+          <div class="panel-header">
+            <span class="panel-error">
+              <TriangleAlert :size="14" :stroke-width="2" />
+              {{ errorMessage }}
+            </span>
+          </div>
+        </div>
+      </Transition>
+
       <div class="submit-row">
-        <button class="submit-btn" @click="shorten">
+        <button class="submit-btn" @click="shorten" :disabled="loading">
           <span class="submit-bracket">[</span>
           <span class="submit-text">SHORTEN</span>
           <span class="submit-bracket">]</span>
@@ -124,6 +135,7 @@
   import { ref, reactive, watch, onMounted, useTemplateRef } from 'vue'
   import { validate, hasErrors }  from '@/lib/validation'
   import type { ValidationErrors } from '@/lib/validation'
+  import { shortenUrl, ApiError } from '@/lib/api'
   import { Copy, ExternalLink, Check, RotateCcw, TriangleAlert } from 'lucide-vue-next'
 
   type Mode = 'auto' | 'custom'
@@ -134,6 +146,7 @@
   const result       = ref('')
   const copied       = ref(false)
   const loading      = ref(false)
+  const errorMessage = ref<string | null>(null)
   const inputLongURL = useTemplateRef<HTMLInputElement>('inputLongURL')
 
   const errors = reactive<ValidationErrors>({ longUrl: null, customSlug: null })
@@ -145,23 +158,42 @@
   watch(mode, (newMode) => {
     if (newMode === 'auto') {
       customSlug.value  = ''
-      errors.customSlug = ''
+      errors.customSlug = null
     }
   })
 
   async function shorten() {
+    // client-side validation
     const validated = validate(longUrl.value, mode.value, customSlug.value)
     Object.assign(errors, validated)
     if (hasErrors(validated)) return
 
     loading.value = true
+    errorMessage.value = null
 
-    // temporary
-    setTimeout(() => {
-      result.value = 'http://localhost:5173/history'
+    try {
+      const response = await shortenUrl({
+        original_url: longUrl.value.trim(),
+        custom_url: mode.value === 'custom' ? customSlug.value.trim() : undefined,
+      })
+
+      result.value = `${import.meta.env.VITE_API_URL}/${response.short_url}`
       copied.value = false
+
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (error.status === 422 && error.errors) {
+          // laravel field validation errors
+          errors.longUrl    = error.errors.original_url?.[0] ?? null
+          errors.customSlug = error.errors.custom_url?.[0]  ?? null
+        } else {
+          // other error -> generic message
+          errorMessage.value = error.message
+        }
+      }
+    } finally {
       loading.value = false
-    }, 500);
+    }
   }
 
   async function copy() {
@@ -171,13 +203,15 @@
   }
 
   function reset() {
-    longUrl.value     = ''
-    customSlug.value  = ''
-    result.value      = ''
-    copied.value      = false
-    mode.value        = 'auto'
-    errors.longUrl    = null
-    errors.customSlug = null
+    longUrl.value      = ''
+    customSlug.value   = ''
+    result.value       = ''
+    copied.value       = false
+    loading.value      = false
+    errorMessage.value = null
+    mode.value         = 'auto'
+    errors.longUrl     = null
+    errors.customSlug  = null
     inputLongURL.value?.focus()
   }
 </script>
