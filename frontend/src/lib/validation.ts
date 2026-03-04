@@ -6,7 +6,8 @@ export interface ValidationErrors {
 export function validateLongUrl(url: string): string | null {
   if (!url.trim())
     return 'url is required'
-  // URL regex
+  if (url.trim().length > 2048)
+    return 'url must be 2048 characters max'
   if (!/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/gi.test(url.trim()))
     return 'invalid url'
   return null
@@ -17,10 +18,10 @@ export function validateCustomSlug(slug: string): string | null {
     return 'slug is required'
 
   if (slug.trim().length < 7)
-    return 'slug length must be 7 minimum'
+    return 'slug length must be 7 min'
   
   if (slug.trim().length > 15)
-    return 'slug length must be 15 maximum'
+    return 'slug length must be 15 max'
   
   if (!/^[a-zA-Z0-9]+$/.test(slug.trim()))
     return 'special characters are not allowed'
