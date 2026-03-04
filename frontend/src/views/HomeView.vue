@@ -94,7 +94,7 @@
             </div>
           </div>
           <div class="result-row">
-            <span class="result-url">{{ result }}</span>
+            <a class="result-url" :href="result" target="_blank" rel="noopener">{{ result }}</a>
             <button class="result-action" @click="copy">
               <Check v-if="copied" :size="14" :stroke-width="2" />
               <Copy  v-else        :size="14" :stroke-width="2" />
@@ -147,7 +147,8 @@
   const mode         = ref<Mode>('auto')
   const longUrl      = ref('')
   const customSlug   = ref('')
-  const result       = ref('')
+  const RESULT_KEY = 'shorturl:last_result'
+  const result     = ref<string>(sessionStorage.getItem(RESULT_KEY) ?? '')
   const copied       = ref(false)
   const loading      = ref(false)
   const errorMessage = ref<string | null>(null)
@@ -207,6 +208,7 @@
       })
 
       result.value = `${import.meta.env.VITE_API_URL}/${response.short_url}`
+      sessionStorage.setItem(RESULT_KEY, result.value)
       copied.value = false
 
     } catch (error) {
@@ -235,6 +237,7 @@
     longUrl.value      = ''
     customSlug.value   = ''
     result.value       = ''
+    sessionStorage.removeItem(RESULT_KEY)
     copied.value       = false
     loading.value      = false
     errorMessage.value = null
@@ -553,6 +556,12 @@
     letter-spacing: 0.08em;
     text-shadow: 0 0 8px var(--crt-glow);
     word-break: break-all;
+    text-decoration: none;
+    transition: text-shadow 0.12s;
+  }
+
+  .result-url:hover {
+    text-shadow: 0 0 14px var(--crt-glow), 0 0 28px var(--crt-glow-wide);
   }
 
   .result-header-actions {
