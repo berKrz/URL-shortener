@@ -22,7 +22,7 @@ export function validateCustomSlug(slug: string): string | null {
   if (slug.trim().length > 15)
     return 'slug length must be 15 maximum'
   
-  if (!/^[a-zA-Z0-9-]+$/.test(slug.trim()))
+  if (!/^[a-zA-Z0-9]+$/.test(slug.trim()))
     return 'special characters are not allowed'
   return null
 }
