@@ -115,6 +115,10 @@
               <TriangleAlert :size="14" :stroke-width="2" />
               {{ errorMessage }}
             </span>
+            <button class="retry-btn" @click="shorten" :disabled="loading">
+              <RefreshCw :size="11" :stroke-width="2.5" />
+              RETRY
+            </button>
           </div>
         </div>
       </Transition>
@@ -136,7 +140,7 @@
   import { validate, hasErrors }  from '@/lib/validation'
   import type { ValidationErrors } from '@/lib/validation'
   import { shortenUrl, ApiError } from '@/lib/api'
-  import { Copy, ExternalLink, Check, RotateCcw, TriangleAlert } from 'lucide-vue-next'
+  import { Copy, ExternalLink, Check, RotateCcw, TriangleAlert, RefreshCw } from 'lucide-vue-next'
 
   type Mode = 'auto' | 'custom'
 
@@ -441,6 +445,40 @@
 
   .mode-key  { font-size: 0.95rem; opacity: 0.8; }
   .mode-desc { font-size: 0.9rem; opacity: 0.75; letter-spacing: 0.06em; }
+
+  /* Retry Button */
+  .retry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    background: none;
+    border: 1px solid var(--crt-error);
+    font-family: 'VT323', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--crt-error);
+    cursor: pointer;
+    padding: 0.05em 0.4em;
+    transition: color 0.12s, background 0.12s, box-shadow 0.12s;
+    outline: none;
+    line-height: 1;
+  }
+
+  .retry-btn:hover {
+    background: var(--crt-error);
+    color: var(--crt-header-bg);
+    box-shadow: 0 0 8px var(--crt-error-glow);
+  }
+
+  .retry-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .retry-btn:focus-visible {
+    outline: 1px solid var(--crt-error);
+    outline-offset: 2px;
+  }
 
   /* ─── Submit ──────────────────────────────────────── */
   .submit-row {
