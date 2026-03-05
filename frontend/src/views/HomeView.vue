@@ -5,13 +5,13 @@
         <span class="legend-text">[ SHORTURL ]</span>
       </legend>
 
-      <div class="panel" :class="{ 'panel--error': errors.longUrl }">
+      <div class="panel" :class="{ 'panel--error': urlStore.errors.longUrl }">
         <div class="panel-header">
           <span class="panel-label">ENTER LONG URL</span>
           <Transition name="err">
-            <span v-if="errors.longUrl" class="panel-error">
+            <span v-if="urlStore.errors.longUrl" class="panel-error">
               <TriangleAlert :size="14" :stroke-width="2" class="mr-2"/>
-              {{ errors.longUrl }}
+              {{ urlStore.errors.longUrl }}
             </span>
             <span v-else class="panel-hint">paste or type below</span>
           </Transition>
@@ -23,7 +23,7 @@
             class="url-input"
             type="url"
             placeholder="https://example.com/very/long/url/that/needs/shortening"
-            @input="errors.longUrl = null"
+            @input="urlStore.errors.longUrl = null"
             ref="inputLongURL"
             @keydown.enter="shorten"
           />
@@ -53,13 +53,13 @@
       </div>
 
       <Transition name="panel-slide">
-        <div v-if="mode === 'custom'" class="panel" :class="{ 'panel--error': errors.customSlug }">
+        <div v-if="mode === 'custom'" class="panel" :class="{ 'panel--error': urlStore.errors.customSlug }">
           <div class="panel-header">
             <span class="panel-label">CUSTOM SLUG</span>
             <Transition name="err">
-              <span v-if="errors.customSlug" class="panel-error">
+              <span v-if="urlStore.errors.customSlug" class="panel-error">
                 <TriangleAlert :size="14" :stroke-width="2" class="mr-2"/>
-                {{ errors.customSlug }}
+                {{ urlStore.errors.customSlug }}
               </span>
               <span v-else class="panel-hint">7–15 characters</span>
             </Transition>
@@ -73,7 +73,7 @@
               type="text"
               placeholder="myCustomSlug"
               maxlength="15"
-              @input="errors.customSlug = null"
+              @input="urlStore.errors.customSlug = null"
               @keydown.enter="shorten"
             />
             <span class="char-counter">{{ customSlug.length }}/15</span>
@@ -109,11 +109,11 @@
       </Transition>
 
       <Transition name="panel-slide">
-        <div v-if="errorMessage" class="panel panel--error">
+        <div v-if="urlStore.errorMessage" class="panel panel--error">
           <div class="panel-header">
             <span class="panel-error">
               <TriangleAlert :size="14" :stroke-width="2" />
-              {{ errorMessage }}
+              {{ urlStore.errorMessage }}
             </span>
             <button class="retry-btn" @click="shorten" :disabled="loading">
               <RefreshCw :size="11" :stroke-width="2.5" />
@@ -136,38 +136,33 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, reactive, watch, onMounted, useTemplateRef, computed, onUnmounted } from 'vue'
-  import { validate, hasErrors }  from '@/lib/validation'
-  import type { ValidationErrors } from '@/lib/validation'
-  import { shortenUrl, ApiError } from '@/lib/api'
+  import { ref, watch, onMounted, onUnmounted, useTemplateRef, computed } from 'vue'
+  import { useUrlStore } from '@/stores/urlStore'
   import { Copy, ExternalLink, Check, RotateCcw, TriangleAlert, RefreshCw } from 'lucide-vue-next'
 
   type Mode = 'auto' | 'custom'
 
+  const urlStore        = useUrlStore()
   const mode         = ref<Mode>('auto')
   const longUrl      = ref('')
   const customSlug   = ref('')
-  const RESULT_KEY = 'shorturl:last_result'
-  const result     = ref<string>(sessionStorage.getItem(RESULT_KEY) ?? '')
+  const result       = ref(sessionStorage.getItem('shorturl:last_result') ?? '')
   const copied       = ref(false)
   const loading      = ref(false)
-  const errorMessage = ref<string | null>(null)
   const inputLongURL = useTemplateRef<HTMLInputElement>('inputLongURL')
-
-  const errors = reactive<ValidationErrors>({ longUrl: null, customSlug: null })
 
   // loading animation
   const loadingFrame = ref(0)
   let loadingTimer: ReturnType<typeof setInterval> | null = null
-
-  const dotsText    = computed(() => ['', '.', '..', '...'][loadingFrame.value])
+  const spinnerChar  = computed(() => ['─', '\\', '|', '/'][loadingFrame.value])
+  const dotsText     = computed(() => ['', '.', '..', '...'][loadingFrame.value])
 
   function startLoading() {
+    loading.value      = true
     loadingFrame.value = 0
     loadingTimer = setInterval(() => {
       loadingFrame.value = (loadingFrame.value + 1) % 4
     }, 180)
-    loading.value = true
   }
 
   function stopLoading() {
@@ -176,54 +171,25 @@
     loading.value = false
   }
 
-  // safety cleanup if component unmounts mid-request
-  onUnmounted(() => {
-    if (loadingTimer) clearInterval(loadingTimer)
-  })
-
-  onMounted(() => {
-    inputLongURL.value?.focus()
-  })
+  onMounted(() => inputLongURL.value?.focus())
+  onUnmounted(() => { if (loadingTimer) clearInterval(loadingTimer) })
 
   watch(mode, (newMode) => {
     if (newMode === 'auto') {
-      customSlug.value  = ''
-      errors.customSlug = null
+      customSlug.value = ''
+      urlStore.clearFieldError('customSlug')
     }
   })
 
   async function shorten() {
-    // client-side validation
-    const validated = validate(longUrl.value, mode.value, customSlug.value)
-    Object.assign(errors, validated)
-    if (hasErrors(validated)) return
-
     startLoading()
-    errorMessage.value = null
+    const shortUrl = await urlStore.shorten(longUrl.value, mode.value, customSlug.value)
+    stopLoading()
 
-    try {
-      const response = await shortenUrl({
-        original_url: longUrl.value.trim(),
-        custom_url: mode.value === 'custom' ? customSlug.value.trim() : undefined,
-      })
-
-      result.value = `${import.meta.env.VITE_API_URL}/${response.short_url}`
-      sessionStorage.setItem(RESULT_KEY, result.value)
+    if (shortUrl) {
+      result.value = shortUrl
       copied.value = false
-
-    } catch (error) {
-      if (error instanceof ApiError) {
-        if (error.status === 422 && error.errors) {
-          // laravel field validation errors
-          errors.longUrl    = error.errors.original_url?.[0] ?? null
-          errors.customSlug = error.errors.custom_url?.[0]  ?? null
-        } else {
-          // other error -> generic message
-          errorMessage.value = error.message
-        }
-      }
-    } finally {
-      stopLoading()
+      sessionStorage.setItem('shorturl:last_result', shortUrl)
     }
   }
 
@@ -231,19 +197,19 @@
     if (!result.value) return
     await navigator.clipboard.writeText(result.value)
     copied.value = true
+    setTimeout(() => (copied.value = false), 2000)
   }
 
   function reset() {
-    longUrl.value      = ''
-    customSlug.value   = ''
-    result.value       = ''
-    sessionStorage.removeItem(RESULT_KEY)
-    copied.value       = false
-    loading.value      = false
-    errorMessage.value = null
-    mode.value         = 'auto'
-    errors.longUrl     = null
-    errors.customSlug  = null
+    result.value   = ''
+    longUrl.value  = ''
+    customSlug.value = ''
+    mode.value     = 'auto'
+    copied.value   = false
+    urlStore.errors.longUrl    = null
+    urlStore.errors.customSlug = null
+    urlStore.errorMessage      = null
+    sessionStorage.removeItem('shorturl:last_result')
     inputLongURL.value?.focus()
   }
 </script>
