@@ -24,7 +24,7 @@
           <TransitionGroup name="entry">
             <fieldset
               v-for="entry in [...store.history].reverse()"
-              :key="entry.originalUrl + entry.createdAt"
+              :key="entry.shortUrl"
               class="entry-fieldset"
               :class="`entry-fieldset--${entry.mode}`"
             >
