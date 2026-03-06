@@ -41,7 +41,7 @@
                   title="Opens in a new tab"
                 >{{ entry.shortUrl }}</a>
                 <button class="entry-copy" @click="copy(entry)">
-                  <Check v-if="copiedKey === entry.originalUrl + entry.createdAt" :size="13" :stroke-width="2" />
+                  <Check v-if="copiedKey === entry.shortUrl" :size="13" :stroke-width="2" />
                   <Copy  v-else :size="13" :stroke-width="2" />
                 </button>
               </div>
@@ -80,7 +80,7 @@
 
   async function copy(entry: HistoryEntry) {
     await navigator.clipboard.writeText(entry.shortUrl)
-    copiedKey.value = entry.originalUrl + entry.createdAt
+    copiedKey.value = entry.shortUrl
     setTimeout(() => (copiedKey.value = null), 2000)
   }
 </script>
