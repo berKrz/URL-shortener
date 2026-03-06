@@ -43,7 +43,7 @@ class UrlController extends Controller
     {
         $url = Url::where('short_url', $shortUrl)->firstOrFail();
 
-        return redirect($url->original_url, 301);
+        return redirect($url->original_url, 302);
     }
 
     // Insert a custom short URL directly
