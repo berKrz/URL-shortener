@@ -18,7 +18,7 @@ class UrlController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'original_url' => ['required', 'url', 'max:2048'],
+            'original_url' => ['required', 'url', 'max:2048', 'regex:/^https?:\/\//i'],
             'custom_url'   => [
                 'nullable',
                 'string',
