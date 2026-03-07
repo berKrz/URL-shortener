@@ -146,7 +146,7 @@
   const mode         = ref<Mode>('auto')
   const longUrl      = ref('')
   const customSlug   = ref('')
-  const result       = ref(sessionStorage.getItem('shorturl:last_result') ?? '')
+  const result       = ref('')
   const copied       = ref(false)
   const loading      = ref(false)
   const inputLongURL = useTemplateRef<HTMLInputElement>('inputLongURL')
@@ -189,7 +189,6 @@
     if (shortUrl) {
       result.value = shortUrl
       copied.value = false
-      sessionStorage.setItem('shorturl:last_result', shortUrl)
     }
   }
 
@@ -209,7 +208,6 @@
     urlStore.errors.longUrl    = null
     urlStore.errors.customSlug = null
     urlStore.errorMessage      = null
-    sessionStorage.removeItem('shorturl:last_result')
     inputLongURL.value?.focus()
   }
 </script>
