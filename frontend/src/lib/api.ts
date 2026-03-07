@@ -57,7 +57,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   // Catch-all for 500, 503, etc.
-  throw new ApiError(response.status, `Unexpected error (${response.status})`)
+  throw new ApiError(response.status, `unexpected error (${response.status})`)
 }
 
 // API methods

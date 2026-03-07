@@ -49,7 +49,7 @@ export const useUrlStore = defineStore('url', () => {
           customSlug: e.errors.custom_url?.[0]   ?? null,
         }
       } else {
-        errorMessage.value = e instanceof ApiError ? e.message : 'Unexpected error'
+        errorMessage.value = e instanceof ApiError ? e.message : 'unexpected error'
       }
       return null
     }

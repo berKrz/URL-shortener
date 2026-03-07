@@ -14,12 +14,6 @@
       </div>
 
       <template v-else>
-        <div class="history-toolbar">
-          <span class="history-count">
-            {{ store.history.length }} record{{ store.history.length !== 1 ? 's' : '' }}
-          </span>
-        </div>
-
         <div class="entry-list">
           <TransitionGroup name="entry">
             <fieldset
@@ -53,6 +47,12 @@
 
             </fieldset>
           </TransitionGroup>
+        </div>
+
+        <div class="history-footer">
+          <span class="history-count">
+            {{ store.history.length }} record{{ store.history.length !== 1 ? 's' : '' }}
+          </span>
         </div>
       </template>
 
@@ -101,11 +101,10 @@
   .history-fieldset {
     display: flex;
     flex-direction: column;
-    gap: 1.4rem;
     border: 1px solid var(--crt-border-bright);
     border-top: 2px solid var(--crt-text);
     border-left: 2px solid var(--crt-text);
-    padding: 1.2rem 1.2rem 1.4rem;
+    padding: 1.2rem 1.2rem 0;      /* no bottom padding — footer handles it */
     border-radius: 0;
     animation: fadeIn 0.4s ease both;
     position: relative;
@@ -114,6 +113,10 @@
       inset 0 0 24px rgba(0, 0, 0, 0.3),
       0 0 0 1px var(--crt-border-dim),
       0 4px 32px rgba(0, 0, 0, 0.35);
+
+    height: 70vh;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .history-legend {
@@ -155,12 +158,27 @@
     animation: blink-text 1.2s step-end infinite;
   }
 
-  /* ─── Toolbar ─────────────────────────────────────── */
-  .history-toolbar {
+  /* ─── Entry list ──────────────────────────────────── */
+  .entry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 0.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--crt-border-bright) transparent;
+    padding-right: 0.5rem;
+    margin-right: -0.5rem;
+  }
+
+  /* ─── Footer bar (count) ──────────────────────────── */
+  .history-footer {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid var(--crt-border-dim);
-    padding-bottom: 0.6rem;
+    border-top: 1px solid var(--crt-border-dim);
+    padding: 0.45rem 0.2rem;
   }
 
   .history-count {
@@ -170,16 +188,9 @@
     opacity: 0.7;
   }
 
-  /* ─── Entry list ──────────────────────────────────── */
-  .entry-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
   /* ─── Entry fieldset ──────────────────────────────── */
   .entry-fieldset {
-    border: 1px solid var(--crt-border-bright);  /* same for both modes — rolled back */
+    border: 1px solid var(--crt-border-bright);
     background: rgba(0, 0, 0, 0.15);
     padding: 0.1rem 0.75rem 0.5rem;
     transition: border-color 0.15s;
@@ -254,10 +265,11 @@
 
   .entry-original {
     flex: 1;
+    min-width: 0;
     color: var(--crt-text);
     font-size: 0.95rem;
     letter-spacing: 0.04em;
-    opacity: 0.75;                /* was 0.55 */
+    opacity: 0.75;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -268,7 +280,7 @@
     color: var(--crt-text);
     font-size: 0.85rem;
     letter-spacing: 0.08em;
-    opacity: 0.65;                /* was 0.45 */
+    opacity: 0.65;
     white-space: nowrap;
   }
 
