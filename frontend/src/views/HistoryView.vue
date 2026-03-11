@@ -32,8 +32,8 @@
                   :href="entry.shortUrl"
                   target="_blank"
                   rel="noopener"
-                  title="Opens in a new tab"
-                >{{ entry.shortUrl }}</a>
+                  title="open in a new tab"
+                >/{{ formatShortUrl(entry.shortUrl) }}</a>
 
                 <div class="entry-actions">
                   <button
@@ -49,7 +49,7 @@
                   <button
                     class="entry-remove"
                     title="Remove from history"
-                    @click="store.removeEntry(entry.shortUrl)"
+                    @click="removeEntry(entry)"
                   >
                     <Trash2 :size="13" :stroke-width="2" />
                   </button>
@@ -71,7 +71,7 @@
           </span>
           <button
             class="history-clear"
-            @click="store.clearHistory()"
+            @click="clearHistory()"
           >
             <BrushCleaning :size="13" :stroke-width="2" />
             <span>CLEAR HISTORY</span>
@@ -86,10 +86,13 @@
 <script setup lang="ts">
   import { ref } from 'vue'
   import { useUrlStore } from '@/stores/urlStore'
-  import { Copy, Check, Trash2, BrushCleaning } from 'lucide-vue-next'
+  import { useConfirmModal } from '@/composables/useConfirmModal'
+  import { Copy, Check, BrushCleaning, Trash2 } from 'lucide-vue-next'
   import type { HistoryEntry } from '@/stores/urlStore'
 
-  const store     = useUrlStore()
+  const store = useUrlStore()
+  const modal = useConfirmModal()
+
   const copiedKey = ref<string | null>(null)
 
   function formatDate(iso: string): string {
@@ -101,9 +104,24 @@
     }).format(new Date(iso))
   }
 
+  function formatShortUrl(original: string): string {
+    return original.split('/').pop() || ''
+  }
+
   async function copy(entry: HistoryEntry) {
     await navigator.clipboard.writeText(entry.shortUrl)
     copiedKey.value = entry.shortUrl
+    setTimeout(() => (copiedKey.value = null), 2000)
+  }
+
+  async function removeEntry(entry: HistoryEntry) {
+    const confirmed = await modal.confirm({ type: 'entry', shortUrl: formatShortUrl(entry.shortUrl) })
+    if (confirmed) store.removeEntry(entry.shortUrl)
+  }
+
+  async function clearHistory() {
+    const confirmed = await modal.confirm({ type: 'history', shortUrl: '' })
+    if (confirmed) store.clearHistory()
   }
 </script>
 
@@ -126,7 +144,7 @@
     border: 1px solid var(--crt-border-bright);
     border-top: 2px solid var(--crt-text);
     border-left: 2px solid var(--crt-text);
-    padding: 1.2rem 1.2rem 0;      /* no bottom padding — footer handles it */
+    padding: 1.2rem 1.2rem 0;
     border-radius: 0;
     animation: fadeIn 0.4s ease both;
     position: relative;
@@ -194,7 +212,7 @@
     margin-right: -0.5rem;
   }
 
-  /* ─── Footer bar (count) ──────────────────────────── */
+  /* ─── Footer bar (count + clear) ─────────────────── */
   .history-footer {
     flex-shrink: 0;
     display: flex;
@@ -301,19 +319,13 @@
     outline: none;
   }
 
-  /* Keep copy visible when check icon is shown (copied state) */
-  .entry-copy--copied {
-    opacity: 1 !important;
-  }
+  .entry-copy--copied { opacity: 1 !important; }
 
-  .entry-copy  { color: var(--crt-text); }
+  .entry-copy   { color: var(--crt-text); }
   .entry-remove { color: var(--crt-text); }
 
-  /* Reveal both buttons on row hover */
   .entry-short-row:hover .entry-copy,
-  .entry-short-row:hover .entry-remove {
-    opacity: 0.5;
-  }
+  .entry-short-row:hover .entry-remove { opacity: 0.5; }
 
   .entry-short-row:hover .entry-copy:hover   { color: var(--crt-highlight); opacity: 1; }
   .entry-short-row:hover .entry-remove:hover { color: var(--crt-highlight); opacity: 1; }
