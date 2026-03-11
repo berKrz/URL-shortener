@@ -59,7 +59,15 @@ export const useUrlStore = defineStore('url', () => {
     errors.value[field] = null
   }
 
-  return { history, errors, errorMessage, shorten, clearFieldError }
+  function removeEntry(shortUrl: string) {
+    history.value = history.value.filter(e => e.shortUrl !== shortUrl)
+  }
+
+  function clearHistory() {
+    history.value = []
+  }
+
+  return { history, errors, errorMessage, shorten, clearFieldError, removeEntry, clearHistory }
 
 }, {
   persist: { pick: ['history'] },

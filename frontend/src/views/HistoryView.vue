@@ -34,10 +34,26 @@
                   rel="noopener"
                   title="Opens in a new tab"
                 >{{ entry.shortUrl }}</a>
-                <button class="entry-copy" @click="copy(entry)">
-                  <Check v-if="copiedKey === entry.shortUrl" :size="13" :stroke-width="2" />
-                  <Copy  v-else :size="13" :stroke-width="2" />
-                </button>
+
+                <div class="entry-actions">
+                  <button
+                    class="entry-copy"
+                    :class="{ 'entry-copy--copied': copiedKey === entry.shortUrl }"
+                    title="Copy to clipboard"
+                    @click="copy(entry)"
+                  >
+                    <Check v-if="copiedKey === entry.shortUrl" :size="13" :stroke-width="2" />
+                    <Copy  v-else :size="13" :stroke-width="2" />
+                  </button>
+
+                  <button
+                    class="entry-remove"
+                    title="Remove from history"
+                    @click="store.removeEntry(entry.shortUrl)"
+                  >
+                    <Trash2 :size="13" :stroke-width="2" />
+                  </button>
+                </div>
               </div>
 
               <div class="entry-footer">
@@ -53,6 +69,13 @@
           <span class="history-count">
             {{ store.history.length }} record{{ store.history.length !== 1 ? 's' : '' }}
           </span>
+          <button
+            class="history-clear"
+            @click="store.clearHistory()"
+          >
+            <BrushCleaning :size="13" :stroke-width="2" />
+            <span>CLEAR HISTORY</span>
+          </button>
         </div>
       </template>
 
@@ -63,7 +86,7 @@
 <script setup lang="ts">
   import { ref } from 'vue'
   import { useUrlStore } from '@/stores/urlStore'
-  import { Copy, Check } from 'lucide-vue-next'
+  import { Copy, Check, Trash2, BrushCleaning } from 'lucide-vue-next'
   import type { HistoryEntry } from '@/stores/urlStore'
 
   const store     = useUrlStore()
@@ -81,7 +104,6 @@
   async function copy(entry: HistoryEntry) {
     await navigator.clipboard.writeText(entry.shortUrl)
     copiedKey.value = entry.shortUrl
-    setTimeout(() => (copiedKey.value = null), 2000)
   }
 </script>
 
@@ -177,6 +199,7 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     border-top: 1px solid var(--crt-border-dim);
     padding: 0.45rem 0.2rem;
   }
@@ -187,6 +210,26 @@
     letter-spacing: 0.1em;
     opacity: 0.7;
   }
+
+  .history-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    background: none;
+    border: none;
+    font-family: 'VT323', monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.1em;
+    color: var(--crt-text);
+    cursor: pointer;
+    padding: 0.1em 0.3em;
+    opacity: 0.6;
+    transition: color 0.12s, opacity 0.12s;
+    outline: none;
+  }
+
+  .history-clear:hover         { color: var(--crt-highlight); opacity: 1; }
+  .history-clear:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 2px; }
 
   /* ─── Entry fieldset ──────────────────────────────── */
   .entry-fieldset {
@@ -238,21 +281,45 @@
     text-shadow: 0 0 14px var(--crt-glow), 0 0 28px var(--crt-glow-wide);
   }
 
-  .entry-copy {
+  /* ─── Entry actions (copy + remove) ──────────────── */
+  .entry-actions {
     flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15em;
+  }
+
+  .entry-copy,
+  .entry-remove {
     display: inline-flex;
     background: none;
     border: none;
-    color: var(--crt-text);
     cursor: pointer;
     padding: 0.1em;
-    opacity: 0.5;
+    opacity: 0;
     transition: color 0.12s, opacity 0.12s;
     outline: none;
   }
 
-  .entry-copy:hover         { color: var(--crt-highlight); opacity: 1; }
-  .entry-copy:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 2px; }
+  /* Keep copy visible when check icon is shown (copied state) */
+  .entry-copy--copied {
+    opacity: 1 !important;
+  }
+
+  .entry-copy  { color: var(--crt-text); }
+  .entry-remove { color: var(--crt-text); }
+
+  /* Reveal both buttons on row hover */
+  .entry-short-row:hover .entry-copy,
+  .entry-short-row:hover .entry-remove {
+    opacity: 0.5;
+  }
+
+  .entry-short-row:hover .entry-copy:hover   { color: var(--crt-highlight); opacity: 1; }
+  .entry-short-row:hover .entry-remove:hover { color: var(--crt-highlight); opacity: 1; }
+
+  .entry-copy:focus-visible,
+  .entry-remove:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 2px; opacity: 1; }
 
   /* ─── Footer row ──────────────────────────────────── */
   .entry-footer {
