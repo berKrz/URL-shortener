@@ -14,7 +14,7 @@ class UrlController extends Controller
     public function __construct(private readonly Base62Encoder $encoder) {}
 
     // POST /api/shorten
-    // Body: { original_url: string, custom_url?: string }
+    // Body: { original_url: string, custom_url?: string, force?: bool }
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -27,14 +27,29 @@ class UrlController extends Controller
                 'regex:/^[a-zA-Z0-9]+$/',
                 'unique:urls,short_url',
             ],
+            'force'        => ['sometimes', 'boolean'],
         ]);
 
-        $url = isset($validated['custom_url']) // checks if custom_url is not null
+        $force = (bool) ($validated['force'] ?? false);
+
+        // Duplicate check — only for force == false
+        if (!$force && !isset($validated['custom_url'])) {
+            $existing = Url::where('original_url', $validated['original_url'])->first();
+
+            if ($existing) {
+                return response()->json([
+                    'existing_short_url' => $existing->short_url,
+                    'message'            => 'this URL has already been shortened.',
+                ], 409);
+            }
+        }
+
+        $url = isset($validated['custom_url'])
             ? $this->storeCustom($validated['original_url'], $validated['custom_url'])
             : $this->storeGenerated($validated['original_url']);
 
         return response()->json([
-            'short_url'    => $url->short_url,
+            'short_url' => $url->short_url,
         ], 201);
     }
 

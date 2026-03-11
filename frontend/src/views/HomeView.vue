@@ -25,7 +25,7 @@
             placeholder="https://example.com/very/long/url/that/needs/shortening"
             @input="urlStore.errors.longUrl = null"
             ref="inputLongURL"
-            @keydown.enter="shorten"
+            @keydown.enter="() => shorten()"
           />
         </div>
       </div>
@@ -74,13 +74,40 @@
               placeholder="myCustomSlug"
               maxlength="15"
               @input="urlStore.errors.customSlug = null"
-              @keydown.enter="shorten"
+              @keydown.enter="() => shorten()"
             />
             <span class="char-counter">{{ customSlug.length }}/15</span>
           </div>
         </div>
       </Transition>
 
+      <!-- Duplicate found panel -->
+      <Transition name="panel-slide">
+        <div v-if="duplicateUrl" class="panel panel--result" aria-live="polite">
+          <div class="panel-header">
+            <span class="panel-label">ALREADY SHORTENED</span>
+            <span class="result-status">duplicate found</span>
+          </div>
+          <div class="result-row">
+            <a class="result-url" :href="duplicateUrl" target="_blank" rel="noopener">{{ duplicateUrl }}</a>
+            <button class="result-action" @click="copy(duplicateUrl, true)">
+              <Check v-if="copied" :size="14" :stroke-width="2" />
+              <Copy  v-else        :size="14" :stroke-width="2" />
+              {{ copied ? 'COPIED' : 'COPY' }}
+            </button>
+            <a class="result-action" :href="duplicateUrl" target="_blank" rel="noopener" @click="promoteDuplicate">
+              <ExternalLink :size="14" :stroke-width="2" />
+              OPEN
+            </a>
+            <button class="result-action result-action--new" @click="() => shorten(true)">
+              <Plus :size="14" :stroke-width="2" />
+              CREATE NEW
+            </button>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- Result panel -->
       <Transition name="panel-slide">
         <div v-if="result" class="panel panel--result" aria-live="polite">
           <div class="panel-header">
@@ -95,7 +122,7 @@
           </div>
           <div class="result-row">
             <a class="result-url" :href="result" target="_blank" rel="noopener">{{ result }}</a>
-            <button class="result-action" @click="copy">
+            <button class="result-action" @click="copy(result)">
               <Check v-if="copied" :size="14" :stroke-width="2" />
               <Copy  v-else        :size="14" :stroke-width="2" />
               {{ copied ? 'COPIED' : 'COPY' }}
@@ -115,7 +142,7 @@
               <TriangleAlert :size="14" :stroke-width="2" />
               {{ urlStore.errorMessage }}
             </span>
-            <button class="retry-btn" @click="shorten" :disabled="loading">
+            <button class="retry-btn" @click="() => shorten()" :disabled="loading">
               <RefreshCw :size="11" :stroke-width="2.5" />
               RETRY
             </button>
@@ -124,7 +151,7 @@
       </Transition>
 
       <div class="submit-row">
-        <button class="submit-btn" @click="shorten" :disabled="loading">
+        <button class="submit-btn" @click="() => shorten()" :disabled="loading">
           <span class="submit-bracket">[</span>
           <span class="submit-text">{{ loading ? 'WORKING' + dotsText : 'SHORTEN' }}</span>
           <span class="submit-bracket">]</span>
@@ -138,11 +165,11 @@
 <script setup lang="ts">
   import { ref, watch, onMounted, onUnmounted, useTemplateRef, computed } from 'vue'
   import { useUrlStore } from '@/stores/urlStore'
-  import { Copy, ExternalLink, Check, RotateCcw, TriangleAlert, RefreshCw } from 'lucide-vue-next'
+  import { Copy, ExternalLink, Check, RotateCcw, TriangleAlert, RefreshCw, Plus } from 'lucide-vue-next'
 
   type Mode = 'auto' | 'custom'
 
-  const urlStore        = useUrlStore()
+  const urlStore     = useUrlStore()
   const mode         = ref<Mode>('auto')
   const longUrl      = ref('')
   const customSlug   = ref('')
@@ -151,10 +178,12 @@
   const loading      = ref(false)
   const inputLongURL = useTemplateRef<HTMLInputElement>('inputLongURL')
 
-  // loading animation
+  // Duplicate state
+  const duplicateUrl = ref('')
+
+  // Loading animation
   const loadingFrame = ref(0)
   let loadingTimer: ReturnType<typeof setInterval> | null = null
-  const spinnerChar  = computed(() => ['─', '\\', '|', '/'][loadingFrame.value])
   const dotsText     = computed(() => ['', '.', '..', '...'][loadingFrame.value])
 
   function startLoading() {
@@ -181,30 +210,50 @@
     }
   })
 
-  async function shorten() {
+  async function shorten(force = false) {
+    duplicateUrl.value = ''
+    result.value       = ''
     startLoading()
-    const shortUrl = await urlStore.shorten(longUrl.value, mode.value, customSlug.value)
+    const outcome = await urlStore.shorten(longUrl.value, mode.value, customSlug.value, force)
     stopLoading()
 
-    if (shortUrl) {
-      result.value = shortUrl
+    if (outcome.status === 'ok') {
+      result.value = outcome.shortUrl
       copied.value = false
+    } else if (outcome.status === 'duplicate') {
+      duplicateUrl.value = outcome.existingShortUrl
+      copied.value       = false
     }
   }
 
-  async function copy() {
-    if (!result.value) return
-    await navigator.clipboard.writeText(result.value)
+  // Promotes the duplicate to the result panel and bumps it in history.
+  // Called by both COPY and OPEN on the duplicate panel.
+  function promoteDuplicate() {
+    urlStore.addOrTouchEntry({
+      originalUrl: longUrl.value.trim(),
+      shortUrl:    duplicateUrl.value,
+      mode:        'auto',
+    })
+    result.value       = duplicateUrl.value
+    duplicateUrl.value = ''
+    copied.value       = false
+  }
+
+  // Unified copy — optionally promotes a duplicate to the result panel first.
+  async function copy(url: string, promote = false) {
+    if (promote) promoteDuplicate()
+    await navigator.clipboard.writeText(url)
     copied.value = true
     setTimeout(() => (copied.value = false), 2000)
   }
 
   function reset() {
-    result.value   = ''
-    longUrl.value  = ''
-    customSlug.value = ''
-    mode.value     = 'auto'
-    copied.value   = false
+    result.value       = ''
+    duplicateUrl.value = ''
+    longUrl.value      = ''
+    customSlug.value   = ''
+    mode.value         = 'auto'
+    copied.value       = false
     urlStore.errors.longUrl    = null
     urlStore.errors.customSlug = null
     urlStore.errorMessage      = null
@@ -270,14 +319,8 @@
     transition: border-color 0.2s ease;
   }
 
-  .panel--error {
-    border-color: var(--crt-error);
-  }
-
-  .panel--result {
-    border-color: var(--crt-highlight);
-    background: rgba(0, 0, 0, 0.2);
-  }
+  .panel--error  { border-color: var(--crt-error); }
+  .panel--result { border-color: var(--crt-highlight); background: rgba(0, 0, 0, 0.2); }
 
   .panel-header {
     display: flex;
@@ -349,10 +392,7 @@
     transition: border-color 0.15s, text-shadow 0.15s;
   }
 
-  .url-input::placeholder {
-    color: var(--crt-text);
-    opacity: 0.55;
-  }
+  .url-input::placeholder { color: var(--crt-text); opacity: 0.55; }
 
   .url-input:focus {
     border-bottom-color: var(--crt-highlight);
@@ -395,25 +435,15 @@
     outline: none;
   }
 
-  .mode-btn:hover { color: var(--crt-highlight); border-color: var(--crt-highlight); }
-  .mode-btn:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 2px; }
-
-  .mode-btn--active {
-    color: var(--crt-header-bg);
-    background: var(--crt-text);
-    border-color: var(--crt-text);
-  }
-
-  .mode-btn--active:hover {
-    color: var(--crt-header-bg);
-    background: var(--crt-highlight);
-    border-color: var(--crt-highlight);
-  }
+  .mode-btn:hover          { color: var(--crt-highlight); border-color: var(--crt-highlight); }
+  .mode-btn:focus-visible  { outline: 1px solid var(--crt-highlight); outline-offset: 2px; }
+  .mode-btn--active        { color: var(--crt-header-bg); background: var(--crt-text); border-color: var(--crt-text); }
+  .mode-btn--active:hover  { color: var(--crt-header-bg); background: var(--crt-highlight); border-color: var(--crt-highlight); }
 
   .mode-key  { font-size: 0.95rem; opacity: 0.8; }
   .mode-desc { font-size: 0.9rem; opacity: 0.75; letter-spacing: 0.06em; }
 
-  /* Retry Button */
+  /* ─── Retry button ────────────────────────────────── */
   .retry-btn {
     display: inline-flex;
     align-items: center;
@@ -431,21 +461,9 @@
     line-height: 1;
   }
 
-  .retry-btn:hover {
-    background: var(--crt-error);
-    color: var(--crt-header-bg);
-    box-shadow: 0 0 8px var(--crt-error-glow);
-  }
-
-  .retry-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  .retry-btn:focus-visible {
-    outline: 1px solid var(--crt-error);
-    outline-offset: 2px;
-  }
+  .retry-btn:hover         { background: var(--crt-error); color: var(--crt-header-bg); box-shadow: 0 0 8px var(--crt-error-glow); }
+  .retry-btn:disabled      { opacity: 0.4; cursor: not-allowed; }
+  .retry-btn:focus-visible { outline: 1px solid var(--crt-error); outline-offset: 2px; }
 
   /* ─── Submit ──────────────────────────────────────── */
   .submit-row {
@@ -471,23 +489,11 @@
     text-shadow: 0 0 6px var(--crt-glow);
   }
 
-  .submit-btn:hover { background: var(--crt-text); color: var(--crt-header-bg); text-shadow: none; }
-  .submit-btn:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 3px; }
-
-  .submit-btn:disabled .submit-cursor {
-    animation: none;
-  }
-
-  .submit-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-
-  .submit-btn:disabled:hover {
-    background: none;
-    color: var(--crt-text);
-    text-shadow: 0 0 6px var(--crt-glow);
-  }
+  .submit-btn:hover          { background: var(--crt-text); color: var(--crt-header-bg); text-shadow: none; }
+  .submit-btn:focus-visible  { outline: 1px solid var(--crt-highlight); outline-offset: 3px; }
+  .submit-btn:disabled       { cursor: not-allowed; opacity: 0.7; }
+  .submit-btn:disabled:hover { background: none; color: var(--crt-text); text-shadow: 0 0 6px var(--crt-glow); }
+  .submit-btn:disabled .submit-cursor { animation: none; }
 
   .submit-bracket { opacity: 0.7; }
 
@@ -508,7 +514,7 @@
   .result-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
     padding: 0.4em 0.75em;
     flex-wrap: wrap;
   }
@@ -524,9 +530,7 @@
     transition: text-shadow 0.12s;
   }
 
-  .result-url:hover {
-    text-shadow: 0 0 14px var(--crt-glow), 0 0 28px var(--crt-glow-wide);
-  }
+  .result-url:hover { text-shadow: 0 0 14px var(--crt-glow), 0 0 28px var(--crt-glow-wide); }
 
   .result-header-actions {
     display: flex;
@@ -547,12 +551,23 @@
     outline: none;
     white-space: nowrap;
     text-decoration: none;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
   }
 
-  .result-action:hover { color: var(--crt-header-bg); background: var(--crt-text); border-color: var(--crt-text); }
+  .result-action:hover         { color: var(--crt-header-bg); background: var(--crt-text); border-color: var(--crt-text); }
   .result-action:focus-visible { outline: 1px solid var(--crt-highlight); outline-offset: 2px; }
 
+  /* Dim CREATE NEW slightly — it's a secondary action */
+  .result-action--new {
+    opacity: 0.6;
+    font-size: 1rem;
+  }
+
+  .result-action--new:hover { opacity: 1; }
+
+  /* ─── Reset button ────────────────────────────────── */
   .reset-btn {
     display: inline-flex;
     align-items: center;
@@ -570,16 +585,8 @@
     line-height: 1;
   }
 
-  .reset-btn:hover {
-    color: var(--crt-error);
-    border-color: var(--crt-error);
-    box-shadow: 0 0 6px var(--crt-error-glow);
-  }
-
-  .reset-btn:focus-visible {
-    outline: 1px solid var(--crt-error);
-    outline-offset: 2px;
-  }
+  .reset-btn:hover         { color: var(--crt-error); border-color: var(--crt-error); box-shadow: 0 0 6px var(--crt-error-glow); }
+  .reset-btn:focus-visible { outline: 1px solid var(--crt-error); outline-offset: 2px; }
 
   /* ─── Transitions ─────────────────────────────────── */
   .panel-slide-enter-active,
@@ -596,7 +603,6 @@
     max-height: 0;
   }
 
-  /* error message crossfade */
   .err-enter-active, .err-leave-active { transition: opacity 0.15s ease; }
   .err-enter-from,  .err-leave-to      { opacity: 0; }
 
