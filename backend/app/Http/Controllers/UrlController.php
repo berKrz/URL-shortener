@@ -58,6 +58,11 @@ class UrlController extends Controller
     {
         $url = Url::where('short_url', $shortUrl)->firstOrFail();
 
+        $scheme = parse_url($url->original_url, PHP_URL_SCHEME);
+        if (!in_array($scheme, ['http', 'https'], true)) {
+            abort(400, 'Invalid redirect target.');
+        }
+
         return redirect($url->original_url, 302);
     }
 
