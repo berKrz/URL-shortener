@@ -72,6 +72,8 @@ export const useUrlStore = defineStore('url', () => {
   // updating its createdAt timestamp. No-ops if the entry doesn't exist.
   function touchEntry(shortUrl: string, originalUrl: string) {
     const idx = history.value.findIndex(e => e.shortUrl === shortUrl)
+    if (idx === -1) return 
+    
     const entry = history.value.splice(idx, 1)[0]
 
     if (entry) {
