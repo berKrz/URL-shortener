@@ -200,8 +200,28 @@
     loading.value = false
   }
 
-  onMounted(() => inputLongURL.value?.focus())
-  onUnmounted(() => { if (loadingTimer) clearInterval(loadingTimer) })
+  // Keyboard navigation
+  function keyboardNavigation(e: KeyboardEvent) {
+    // Ignore if an input or textarea is focused
+    const tag = (e.target as HTMLElement)?.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
+    if (e.key === '1') {
+      mode.value = 'auto'
+    } else if (e.key === '2') {
+      mode.value = 'custom'
+    }
+  }
+
+  onMounted(() => {
+    inputLongURL.value?.focus()
+    window.addEventListener('keydown', keyboardNavigation)
+  })
+
+  onUnmounted(() => {
+    if (loadingTimer) clearInterval(loadingTimer)
+    window.removeEventListener('keydown', handleKeydown)
+  })
 
   watch(mode, (newMode) => {
     if (newMode === 'auto') {
