@@ -220,7 +220,7 @@
 
   onUnmounted(() => {
     if (loadingTimer) clearInterval(loadingTimer)
-    window.removeEventListener('keydown', handleKeydown)
+    window.removeEventListener('keydown', keyboardNavigation)
   })
 
   watch(mode, (newMode) => {
