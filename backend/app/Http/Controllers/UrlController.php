@@ -32,8 +32,8 @@ class UrlController extends Controller
 
         $force = (bool) ($validated['force'] ?? false);
 
-        // Duplicate check — only for force == false
-        if (!$force && !isset($validated['custom_url'])) {
+        // Skipped only when force == true (user explicitly chose to create a new entry)
+        if (!$force) {
             $existing = Url::where('original_url', $validated['original_url'])->first();
 
             if ($existing) {
