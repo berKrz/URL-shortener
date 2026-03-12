@@ -39,7 +39,7 @@ class UrlController extends Controller
             if ($existing) {
                 return response()->json([
                     'existing_short_url' => $existing->short_url,
-                    'message'            => 'this URL has already been shortened.',
+                    'message'            => 'this URL has already been shortened',
                 ], 409);
             }
         }
@@ -60,7 +60,7 @@ class UrlController extends Controller
 
         $scheme = parse_url($url->original_url, PHP_URL_SCHEME);
         if (!in_array($scheme, ['http', 'https'], true)) {
-            abort(400, 'Invalid redirect target.');
+            abort(400, 'invalid redirect target');
         }
 
         return redirect($url->original_url, 302);

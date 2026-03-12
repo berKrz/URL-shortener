@@ -37,7 +37,7 @@ export class ApiError extends Error {
 // Thrown specifically on 409 — carries the existing short URL
 export class DuplicateUrlError extends Error {
   constructor(public readonly existingShortUrl: string) {
-    super('this URL has already been shortened.')
+    super('this URL has already been shortened')
     this.name = 'DuplicateUrlError'
   }
 }
@@ -73,7 +73,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   }
 
   if (response.status === 404) {
-    throw new ApiError(404, 'Short URL not found.')
+    throw new ApiError(404, 'Short URL not found')
   }
 
   // Catch-all for 500, 503, etc.
@@ -81,8 +81,8 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 // POST /api/shorten
-// Shortens a URL, optionally with a custom code.
-// Pass force: true to bypass the duplicate check and always create a new entry.
+// Shortens a URL, optionally with a custom code
+// Pass force: true to bypass the duplicate check and always create a new entry
 export async function shortenUrl(payload: ShortenRequest): Promise<ShortenResponse> {
   return request<ShortenResponse>('/shorten', {
     method: 'POST',
