@@ -17,7 +17,7 @@
         <div class="entry-list">
           <TransitionGroup name="entry">
             <fieldset
-              v-for="entry in [...store.history].reverse()"
+              v-for="entry in reversedHistory"
               :key="entry.shortUrl"
               class="entry-fieldset"
               :class="`entry-fieldset--${entry.mode}`"
@@ -88,10 +88,11 @@
   import type { HistoryEntry } from '@/stores/urlStore'
   import { useUrlStore } from '@/stores/urlStore'
   import { BrushCleaning, Check, Copy, Trash2 } from 'lucide-vue-next'
-  import { ref } from 'vue'
+  import { computed, ref } from 'vue'
 
   const store = useUrlStore()
   const modal = useConfirmModal()
+  const reversedHistory = computed(() => [...store.history].reverse())
 
   const copiedKey = ref<string | null>(null)
 
