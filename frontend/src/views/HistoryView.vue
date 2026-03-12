@@ -31,7 +31,7 @@
                   class="entry-short"
                   :href="entry.shortUrl"
                   target="_blank"
-                  rel="noopener"
+                  rel="noopener noreferrer"
                   title="open in a new tab"
                 >/{{ formatShortUrl(entry.shortUrl) }}</a>
 

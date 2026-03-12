@@ -89,13 +89,13 @@
             <span class="result-status">duplicate found</span>
           </div>
           <div class="result-row">
-            <a class="result-url" :href="duplicateUrl" target="_blank" rel="noopener">{{ duplicateUrl }}</a>
+            <a class="result-url" :href="duplicateUrl" target="_blank" rel="noopener noreferrer">{{ duplicateUrl }}</a>
             <button class="result-action" @click="copy(duplicateUrl, true)">
               <Check v-if="copied" :size="14" :stroke-width="2" />
               <Copy  v-else        :size="14" :stroke-width="2" />
               {{ copied ? 'COPIED' : 'COPY' }}
             </button>
-            <a class="result-action" :href="duplicateUrl" target="_blank" rel="noopener" @click="promoteDuplicate">
+            <a class="result-action" :href="duplicateUrl" target="_blank" rel="noopener noreferrer" @click="promoteDuplicate">
               <ExternalLink :size="14" :stroke-width="2" />
               OPEN
             </a>
@@ -121,13 +121,13 @@
             </div>
           </div>
           <div class="result-row">
-            <a class="result-url" :href="result" target="_blank" rel="noopener">{{ result }}</a>
+            <a class="result-url" :href="result" target="_blank" rel="noopener noreferrer">{{ result }}</a>
             <button class="result-action" @click="copy(result)">
               <Check v-if="copied" :size="14" :stroke-width="2" />
               <Copy  v-else        :size="14" :stroke-width="2" />
               {{ copied ? 'COPIED' : 'COPY' }}
             </button>
-            <a class="result-action" :href="result" target="_blank" rel="noopener">
+            <a class="result-action" :href="result" target="_blank" rel="noopener noreferrer">
               <ExternalLink :size="14" :stroke-width="2" />
               OPEN
             </a>
