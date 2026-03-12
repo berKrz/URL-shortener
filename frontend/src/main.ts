@@ -1,8 +1,8 @@
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
-import { createPinia } from 'pinia'
 
 const app = createApp(App)
 

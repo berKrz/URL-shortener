@@ -163,9 +163,9 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, watch, onMounted, onUnmounted, useTemplateRef, computed } from 'vue'
   import { useUrlStore } from '@/stores/urlStore'
-  import { Copy, ExternalLink, Check, RotateCcw, TriangleAlert, RefreshCw, Plus } from 'lucide-vue-next'
+  import { Check, Copy, ExternalLink, Plus, RefreshCw, RotateCcw, TriangleAlert } from 'lucide-vue-next'
+  import { computed, onMounted, onUnmounted, ref, useTemplateRef, watch } from 'vue'
 
   type Mode = 'auto' | 'custom'
 
@@ -262,8 +262,6 @@
 </script>
 
 <style scoped>
-  @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
   .home {
     font-family: 'VT323', monospace;
     display: flex;

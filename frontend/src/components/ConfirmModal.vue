@@ -69,8 +69,8 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, watch } from 'vue'
   import { useConfirmModal } from '@/composables/useConfirmModal'
+  import { ref, watch } from 'vue'
 
   const modal   = useConfirmModal()
   const titleId = 'confirm-modal-title'

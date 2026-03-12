@@ -37,9 +37,9 @@
 </template>
 
 <script setup lang="ts">
-  import { RouterLink } from 'vue-router'
   import { useDark, useToggle } from '@vueuse/core'
-  import { Sun, Moon } from 'lucide-vue-next'
+  import { Moon, Sun } from 'lucide-vue-next'
+  import { RouterLink } from 'vue-router'
 
   const isDark = useDark({
     selector: 'html',
@@ -51,8 +51,6 @@
 </script>
 
 <style scoped>
-  @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
   .navbar {
     font-family: 'VT323', monospace;
     font-size: 1.4rem;

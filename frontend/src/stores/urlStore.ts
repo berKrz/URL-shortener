@@ -1,8 +1,8 @@
-import { ref }                                     from 'vue'
-import { defineStore }                             from 'pinia'
-import { validate, hasErrors }                     from '@/lib/validation'
-import { shortenUrl, ApiError, DuplicateUrlError } from '@/lib/api'
-import type { ValidationErrors }                   from '@/lib/validation'
+import { ApiError, DuplicateUrlError, shortenUrl } from '@/lib/api'
+import type { ValidationErrors } from '@/lib/validation'
+import { hasErrors, validate } from '@/lib/validation'
+import { defineStore } from 'pinia'
+import { ref } from 'vue'
 
 export interface HistoryEntry {
   originalUrl: string

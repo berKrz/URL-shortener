@@ -25,10 +25,10 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, watch } from 'vue'
   import { useDark } from '@vueuse/core'
-  import NavBar      from './components/NavBar.vue'
+  import { ref, watch } from 'vue'
   import ConfirmModal from './components/ConfirmModal.vue'
+  import NavBar from './components/NavBar.vue'
 
   const isDark = useDark({
     selector: 'html',

@@ -84,11 +84,11 @@
 </template>
 
 <script setup lang="ts">
-  import { ref } from 'vue'
-  import { useUrlStore } from '@/stores/urlStore'
   import { useConfirmModal } from '@/composables/useConfirmModal'
-  import { Copy, Check, BrushCleaning, Trash2 } from 'lucide-vue-next'
   import type { HistoryEntry } from '@/stores/urlStore'
+  import { useUrlStore } from '@/stores/urlStore'
+  import { BrushCleaning, Check, Copy, Trash2 } from 'lucide-vue-next'
+  import { ref } from 'vue'
 
   const store = useUrlStore()
   const modal = useConfirmModal()
@@ -126,8 +126,6 @@
 </script>
 
 <style scoped>
-  @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
   .history {
     font-family: 'VT323', monospace;
     display: flex;
